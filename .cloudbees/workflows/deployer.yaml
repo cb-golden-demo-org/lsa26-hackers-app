@@ -14,7 +14,7 @@ on:
 jobs:
   hackers-api:
     if: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].deploy }}
-    uses: cb-golden-demo-org/lsa26-hackers-api/.github/workflows/deploy-api.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-api/.github/workflows/deploy-api.yml
     with:
       artifact-url: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].url }}
       artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].id }}
@@ -23,7 +23,7 @@ jobs:
     vars: inherit
   hackers-auth:
     if: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].deploy }}
-    uses: cb-golden-demo-org/lsa26-hackers-auth/.github/workflows/deploy-auth.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-auth/.github/workflows/deploy-auth.yml
     with:
       artifact-url: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].url }}
       artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].id }}
@@ -32,7 +32,7 @@ jobs:
     vars: inherit
   hackers-web:
     if: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].deploy }}
-    uses: cb-golden-demo-org/lsa26-hackers-web/.github/workflows/deploy-web.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-web/.github/workflows/deploy-web.yml
     with:
       artifact-url: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].url }}
       artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].id }}
