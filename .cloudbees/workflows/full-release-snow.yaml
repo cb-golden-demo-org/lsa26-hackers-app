@@ -102,19 +102,13 @@ jobs:
         uses: docker://alpine:3.19
         id: format-issues
         run: |
-          # Install jq for JSON parsing
           apk add --no-cache jq
 
-          # Create markdown table from JSON
-          echo 'issues-table<<EOF' >> $CLOUDBEES_OUTPUTS/issues-table
-          echo '| Key | Summary | Status | Priority |' >> $CLOUDBEES_OUTPUTS/issues-table
+          echo '| Key | Summary | Status | Assignee |' > $CLOUDBEES_OUTPUTS/issues-table
           echo '|-----|---------|--------|----------|' >> $CLOUDBEES_OUTPUTS/issues-table
 
-          # Parse JSON and format as table rows
           echo '${{ steps.get-issues.outputs.issues }}' | jq -r '.[] |
-            "| " + .key + " | " + .fields.summary + " | " + .fields.status.name + " | " + .fields.priority.name + " |"' >> $CLOUDBEES_OUTPUTS/issues-table
-
-          echo 'EOF' >> $CLOUDBEES_OUTPUTS/issues-table
+            "| " + .key + " | " + .fields.summary + " | " + .fields.status.name + " | " + (.fields.assignee.displayName // "-") + " |"' >> $CLOUDBEES_OUTPUTS/issues-table
       - name: Report evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -136,9 +130,7 @@ jobs:
     needs:
       - gather-evidence
     outputs:
-      security-scan-results: ${{ steps.security-scan.outputs.results }}
       code-quality-score: ${{ steps.code-analysis.outputs.quality-score }}
-      dependency-vulnerabilities: ${{ steps.dependency-check.outputs.vulnerabilities }}
     steps:
       - name: Security Vulnerability Scan
         id: security-scan
@@ -146,8 +138,7 @@ jobs:
         run: |
           apk add --no-cache curl jq
 
-          # Simulate security scan results
-          cat > scan_results.json << 'EOF'
+          cat > scan_results.json << EOF
           {
             "scan_id": "sec-scan-$(date +%s)",
             "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
@@ -156,34 +147,17 @@ jobs:
             "medium": 7,
             "low": 23,
             "info": 45,
-            "total": 77,
-            "findings": [
-              {
-                "severity": "HIGH",
-                "title": "Outdated SSL/TLS Configuration",
-                "description": "TLS 1.1 still enabled, should enforce TLS 1.2+",
-                "file": "nginx.conf",
-                "remediation": "Update SSL configuration to disable TLS 1.1"
-              },
-              {
-                "severity": "HIGH",
-                "title": "Missing Security Headers",
-                "description": "X-Frame-Options header not configured",
-                "file": "server configuration",
-                "remediation": "Add X-Frame-Options: DENY header"
-              }
-            ]
+            "total": 77
           }
           EOF
 
-          cat scan_results.json > $CLOUDBEES_OUTPUTS/results
+          jq . scan_results.json
       - name: Code Quality Analysis
         id: code-analysis
         uses: docker://node:22-alpine
         run: |
-          # Simulate code quality metrics
           QUALITY_SCORE=88
-          echo "$QUALITY_SCORE" > $CLOUDBEES_OUTPUTS/quality-score
+          printf '%s' "$QUALITY_SCORE" > $CLOUDBEES_OUTPUTS/quality-score
 
           echo "Running ESLint analysis..."
           sleep 2
@@ -195,36 +169,8 @@ jobs:
         id: dependency-check
         uses: docker://node:22-alpine
         run: |
-          # Simulate dependency scan
           echo "Scanning npm dependencies..."
           sleep 3
-
-          cat > vulnerabilities.json << 'EOF'
-          {
-            "audit_summary": {
-              "vulnerabilities": {
-                "info": 0,
-                "low": 3,
-                "moderate": 1,
-                "high": 0,
-                "critical": 0,
-                "total": 4
-              }
-            },
-            "advisories": [
-              {
-                "severity": "moderate",
-                "title": "Regular Expression Denial of Service",
-                "module_name": "semver",
-                "vulnerable_versions": "<7.5.2",
-                "patched_versions": ">=7.5.2"
-              }
-            ]
-          }
-          EOF
-
-          cat vulnerabilities.json > $CLOUDBEES_OUTPUTS/vulnerabilities
-
           echo "✓ 0 critical vulnerabilities found"
           echo "✓ 1 moderate vulnerability found (non-blocking)"
       - name: Publish Quality Gate Evidence
