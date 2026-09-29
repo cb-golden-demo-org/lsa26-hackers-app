@@ -8,6 +8,8 @@ on:
         type: string
         required: true
         description: This is a system-generated parameter and is required for use in application releases. Refer to https://docs.cloudbees.com/docs/cloudbees-platform/latest/applications/releases#manifest for the expected format
+      flags-ids:
+        type: string
 metadata:
   stages/v1alpha1:
     - name: Release Readiness
@@ -35,24 +37,25 @@ metadata:
         - wait-for-snow-change-request
         - deploy-to-prod
         - run-smoke-tests
+        - roll-out-feature-flags
 jobs:
   create-release-issue:
     outputs:
       issue-key: ${{ steps.create-release-issue.outputs.issue-key }}
       issue-url: ${{ steps.create-release-issue.outputs.issue-url }}
     steps:
-      - with:
+      - uses: https://github.com/cloudbees-days/jira-create-issue
+        id: create-release-issue
+        with:
           jira-url: ${{ secrets.JIRA_URL }}
           jira-username: ${{ secrets.JIRA_USERNAME }}
           jira-token: ${{ secrets.JIRA_TOKEN }}
-          project-key: CBDEMO
+          project-key: UDEMO
           issue-type: Task
           issue-fields: |
             summary: "Release ${{ cloudbees.scm.repository}} #${{ cloudbees.run_number }}"
             description: |
               Initializing release of ${{ cloudbees.scm.repository}} #${{ cloudbees.run_number }}
-        uses: https://github.com/cloudbees-days/jira-create-issue
-        id: create-release-issue
       - name: Report release issue creation
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -82,17 +85,17 @@ jobs:
           max-results: "20"
       - uses: https://github.com/cloudbees-io/checkout@v1
         name: Checkout Hackers Web
-        id: checkout-hackers-web
+        id: checkout-lsa26-hackers-web
         with:
           repository: cb-golden-demo-org/lsa26-hackers-web
       - uses: https://github.com/cloudbees-io/checkout@v1
         name: Checkout Hackers Auth
-        id: checkout-hackers-auth
+        id: checkout-lsa26-hackers-auth
         with:
           repository: cb-golden-demo-org/lsa26-hackers-auth
       - uses: https://github.com/cloudbees-io/checkout@v1
         name: Checkout Hackers API
-        id: checkout-hackers-api
+        id: checkout-lsa26-hackers-api
         with:
           repository: cb-golden-demo-org/lsa26-hackers-api
       - name: Format issues as table
@@ -125,137 +128,132 @@ jobs:
             ${{ steps.format-issues.outputs.issues-table }}
 
             ## Repositories
-            ${{ steps.checkout-hackers-web.outputs.commit-url}}
-            ${{ steps.checkout-hackers-auth.outputs.commit-url}}
-            ${{ steps.checkout-hackers-api.outputs.commit-url}}
+            ${{ steps.checkout-lsa26-hackers-web.outputs.commit-url}}
+            ${{ steps.checkout-lsa26-hackers-auth.outputs.commit-url}}
+            ${{ steps.checkout-lsa26-hackers-api.outputs.commit-url}}
           format: MARKDOWN
-quality-checks:
-      needs:
-        - gather-evidence
-      outputs:
-        security-scan-results: ${{ steps.security-scan.outputs.results }}
-        code-quality-score: ${{ steps.code-analysis.outputs.quality-score }}
-        dependency-vulnerabilities: ${{ steps.dependency-check.outputs.vulnerabilities }}
-      steps:
-        - name: Security Vulnerability Scan
-          id: security-scan
-          uses: docker://alpine:3.19
-          run: |
-            apk add --no-cache curl jq
+  quality-checks:
+    needs:
+      - gather-evidence
+    outputs:
+      security-scan-results: ${{ steps.security-scan.outputs.results }}
+      code-quality-score: ${{ steps.code-analysis.outputs.quality-score }}
+      dependency-vulnerabilities: ${{ steps.dependency-check.outputs.vulnerabilities }}
+    steps:
+      - name: Security Vulnerability Scan
+        id: security-scan
+        uses: docker://alpine:3.19
+        run: |
+          apk add --no-cache curl jq
 
-            # Simulate security scan results
-            cat > scan_results.json << 'EOF'
-            {
-              "scan_id": "sec-scan-$(date +%s)",
-              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
-              "critical": 0,
-              "high": 2,
-              "medium": 7,
-              "low": 23,
-              "info": 45,
-              "total": 77,
-              "findings": [
-                {
-                  "severity": "HIGH",
-                  "title": "Outdated SSL/TLS Configuration",
-                  "description": "TLS 1.1 still enabled, should enforce TLS 1.2+",
-                  "file": "nginx.conf",
-                  "remediation": "Update SSL configuration to disable TLS 1.1"
-                },
-                {
-                  "severity": "HIGH",
-                  "title": "Missing Security Headers",
-                  "description": "X-Frame-Options header not configured",
-                  "file": "server configuration",
-                  "remediation": "Add X-Frame-Options: DENY header"
-                }
-              ]
-            }
-            EOF
-            
-            # Correction : minification du JSON
-            jq -c . scan_results.json > $CLOUDBEES_OUTPUTS/results
-            
-        - name: Code Quality Analysis
-          id: code-analysis
-          uses: docker://node:22-alpine
-          run: |
-            # Simulate code quality metrics
-            QUALITY_SCORE=88
-            echo "$QUALITY_SCORE" > $CLOUDBEES_OUTPUTS/quality-score
-
-            echo "Running ESLint analysis..."
-            sleep 2
-            echo "✓ Code style compliance: 94%"
-            echo "✓ Complexity score: $QUALITY_SCORE/100"
-            echo "✓ Test coverage: 87.3%"
-            echo "✓ Maintainability index: A"
-            
-        - name: Dependency Vulnerability Check
-          id: dependency-check
-          uses: docker://node:22-alpine
-          run: |
-            # Simulate dependency scan
-            echo "Scanning npm dependencies..."
-            sleep 3
-
-            cat > vulnerabilities.json << 'EOF'
-            {
-              "audit_summary": {
-                "vulnerabilities": {
-                  "info": 0,
-                  "low": 3,
-                  "moderate": 1,
-                  "high": 0,
-                  "critical": 0,
-                  "total": 4
-                }
+          # Simulate security scan results
+          cat > scan_results.json << 'EOF'
+          {
+            "scan_id": "sec-scan-$(date +%s)",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
+            "critical": 0,
+            "high": 2,
+            "medium": 7,
+            "low": 23,
+            "info": 45,
+            "total": 77,
+            "findings": [
+              {
+                "severity": "HIGH",
+                "title": "Outdated SSL/TLS Configuration",
+                "description": "TLS 1.1 still enabled, should enforce TLS 1.2+",
+                "file": "nginx.conf",
+                "remediation": "Update SSL configuration to disable TLS 1.1"
               },
-              "advisories": [
-                {
-                  "severity": "moderate",
-                  "title": "Regular Expression Denial of Service",
-                  "module_name": "semver",
-                  "vulnerable_versions": "<7.5.2",
-                  "patched_versions": ">=7.5.2"
-                }
-              ]
-            }
-            EOF
+              {
+                "severity": "HIGH",
+                "title": "Missing Security Headers",
+                "description": "X-Frame-Options header not configured",
+                "file": "server configuration",
+                "remediation": "Add X-Frame-Options: DENY header"
+              }
+            ]
+          }
+          EOF
 
-            # Correction : suppression des retours à la ligne
-            cat vulnerabilities.json | tr -d '\n' > $CLOUDBEES_OUTPUTS/vulnerabilities
+          cat scan_results.json > $CLOUDBEES_OUTPUTS/results
+      - name: Code Quality Analysis
+        id: code-analysis
+        uses: docker://node:22-alpine
+        run: |
+          # Simulate code quality metrics
+          QUALITY_SCORE=88
+          echo "$QUALITY_SCORE" > $CLOUDBEES_OUTPUTS/quality-score
 
-            echo "✓ 0 critical vulnerabilities found"
-            echo "✓ 1 moderate vulnerability found (non-blocking)"
-            
-        - name: Publish Quality Gate Evidence
-          uses: cloudbees-io/publish-evidence-item@v1
-          with:
-            content: |
-              # Quality Gate Results
+          echo "Running ESLint analysis..."
+          sleep 2
+          echo "✓ Code style compliance: 94%"
+          echo "✓ Complexity score: $QUALITY_SCORE/100"
+          echo "✓ Test coverage: 87.3%"
+          echo "✓ Maintainability index: A"
+      - name: Dependency Vulnerability Check
+        id: dependency-check
+        uses: docker://node:22-alpine
+        run: |
+          # Simulate dependency scan
+          echo "Scanning npm dependencies..."
+          sleep 3
 
-              ## Security Scan
-              - **Critical**: 0
-              - **High**: 2
-              - **Medium**: 7
-              - **Low**: 23
-              - **Total Issues**: 77
+          cat > vulnerabilities.json << 'EOF'
+          {
+            "audit_summary": {
+              "vulnerabilities": {
+                "info": 0,
+                "low": 3,
+                "moderate": 1,
+                "high": 0,
+                "critical": 0,
+                "total": 4
+              }
+            },
+            "advisories": [
+              {
+                "severity": "moderate",
+                "title": "Regular Expression Denial of Service",
+                "module_name": "semver",
+                "vulnerable_versions": "<7.5.2",
+                "patched_versions": ">=7.5.2"
+              }
+            ]
+          }
+          EOF
 
-              ## Code Quality
-              - **Quality Score**: ${{ steps.code-analysis.outputs.quality-score }}/100
-              - **Test Coverage**: 87.3%
-              - **Code Style Compliance**: 94%
-              - **Maintainability**: Grade A
+          cat vulnerabilities.json > $CLOUDBEES_OUTPUTS/vulnerabilities
 
-              ## Dependency Security
-              - **Critical Vulnerabilities**: 0
-              - **High Vulnerabilities**: 0
-              - **Moderate Vulnerabilities**: 1
-              - **Low Vulnerabilities**: 3
+          echo "✓ 0 critical vulnerabilities found"
+          echo "✓ 1 moderate vulnerability found (non-blocking)"
+      - name: Publish Quality Gate Evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |
+            # Quality Gate Results
 
-              **Quality Gate**: PASSED - No blocking issues found
-            format: MARKDOWN
+            ## Security Scan
+            - **Critical**: 0
+            - **High**: 2
+            - **Medium**: 7
+            - **Low**: 23
+            - **Total Issues**: 77
+
+            ## Code Quality
+            - **Quality Score**: ${{ steps.code-analysis.outputs.quality-score }}/100
+            - **Test Coverage**: 87.3%
+            - **Code Style Compliance**: 94%
+            - **Maintainability**: Grade A
+
+            ## Dependency Security
+            - **Critical Vulnerabilities**: 0
+            - **High Vulnerabilities**: 0
+            - **Moderate Vulnerabilities**: 1
+            - **Low Vulnerabilities**: 3
+
+            **Quality Gate**: PASSED - No blocking issues found
+          format: MARKDOWN
   update-jira-tickets:
     needs:
       - quality-checks
@@ -301,11 +299,11 @@ quality-checks:
         id: config-update
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
-          org-id: e8854086-415f-4497-a717-522d5a8af4f8
+          org-id: ${{ vars.ORG_ID }}
           application-name: lsa26-hackers-app
           environment-name: lsa26-hackers-qa
           flag-name: default.score
-          use-org-as-app: false
+          use-org-as-app: true
           flag-config: |
             enabled: true
             defaultValue: true
@@ -576,11 +574,11 @@ quality-checks:
         id: config-update
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
-          org-id: e8854086-415f-4497-a717-522d5a8af4f8
+          org-id: ${{ vars.ORG_ID }}
           application-name: lsa26-hackers-app
           environment-name: lsa26-hackers-staging
           flag-name: default.score
-          use-org-as-app: false
+          use-org-as-app: true
           flag-config: |
             enabled: true
             defaultValue: true
@@ -1013,4 +1011,51 @@ quality-checks:
             - **SSL/TLS**: Valid certificates
 
             **Production Smoke Tests**: PASSED - System ready for traffic
+          format: MARKDOWN
+  roll-out-feature-flags:
+    environment: lsa26-hackers-prod
+    needs:
+      - run-smoke-tests
+    steps:
+      - name: Get current time
+        id: current-time
+        uses: docker://alpine:3.20
+        run: |
+          echo "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")" > $CLOUDBEES_OUTPUTS/now
+          echo "$(date -u -d "@$(( $(date +%s) + 3600 ))" +%Y-%m-%dT%H:%M:%S.000Z)" > $CLOUDBEES_OUTPUTS/one-hour
+          echo "$(date -u -d "@$(( $(date +%s) + 7200 ))" +%Y-%m-%dT%H:%M:%S.000Z)" > $CLOUDBEES_OUTPUTS/two-hours
+      - name: Roll out flags on schedule
+        uses: https://github.com/cloudbees-days/fm-update-flag
+        id: config-update
+        with:
+          token: ${{ secrets.UNIFY_TOKEN }}
+          org-id: ${{ vars.ORG_ID }}
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-prod
+          flag-name: default.score
+          use-org-as-app: true
+          flag-config: |
+            enabled: true
+            defaultValue:
+            - from: ${{ steps.current-time.outputs.now }}
+              percentage: 10
+            - from: ${{ steps.current-time.outputs.one-hour }}
+              percentage: 50
+            - from: ${{ steps.current-time.outputs.two-hours }}
+              percentage: 100
+      - name: Publish evidence
+        uses: cloudbees-io/publish-evidence-item@v1
+        with:
+          content: |-
+            ## Flag Configuration Updated
+
+            **Flag ID:** ${{ steps.config-update.outputs.flag-id }}
+            **Update Success:** ${{ steps.config-update.outputs.success }}
+
+            **Applied Configuration:**
+            ```json
+            ${{ steps.config-update.outputs.configuration }}
+            ```
+
+            ✅ Flag configuration update successful
           format: MARKDOWN
