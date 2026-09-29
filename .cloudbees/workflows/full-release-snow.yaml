@@ -249,7 +249,6 @@ jobs:
           application-name: Hackers-app
           environment-name: lsa26-hackers-qa
           flag-name: default.score
-          use-org-as-app: true
           flag-config: |
             enabled: true
             defaultValue: true
@@ -524,7 +523,6 @@ jobs:
           application-name: Hackers-app
           environment-name: lsa26-hackers-staging
           flag-name: default.score
-          use-org-as-app: true
           flag-config: |
             enabled: true
             defaultValue: true
@@ -979,7 +977,6 @@ jobs:
           application-name: Hackers-app
           environment-name: lsa26-hackers-prod
           flag-name: default.score
-          use-org-as-app: true
           flag-config: |
             enabled: true
             defaultValue:
