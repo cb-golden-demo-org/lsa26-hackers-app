@@ -113,12 +113,12 @@ jobs:
         uses: https://github.com/cloudbees-io/checkout@v1
         id: checkout-snkrs-web
         with:
-          repository: cb-golden-demo-org/sd-hackers-web
+          repository: cb-golden-demo-org/lsa26-hackers-web
       - name: Checkout API components
         uses: https://github.com/cloudbees-io/checkout@v1
         id: checkout-inventory-api
         with:
-          repository: cb-golden-demo-org/sd-hackers-api
+          repository: cb-golden-demo-org/lsa26-hackers-api
       - name: Format release plan
         id: format-release-plan
         uses: docker://alpine:3.20
@@ -358,22 +358,22 @@ jobs:
   deploy-snkrs-to-qa:
     needs:
       - inventory-unlock
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-qa
+      environment: lsa26-hackers-qa
     secrets: inherit
     vars: inherit
   enable-snkrs-flags-qa:
     needs:
       - deploy-snkrs-to-qa
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     steps:
       - with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-qa
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-qa
           flag-name: default.score
           flag-config: |
             enabled: true
@@ -392,7 +392,7 @@ jobs:
         uses: cloudbees-io/publish-evidence-item@v1
         name: Publish QA flag evidence
   validate-consumer-journey-qa:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs:
       - enable-snkrs-flags-qa
     outputs:
@@ -422,7 +422,7 @@ jobs:
             - Checkout
             - Confirmation
   qa-exit-criteria:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs:
       - validate-consumer-journey-qa
     outputs:
@@ -447,22 +447,22 @@ jobs:
   deploy-to-staging:
     needs:
       - qa-exit-criteria
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-staging
+      environment: lsa26-hackers-staging
     secrets: inherit
     vars: inherit
   enable-snkrs-flags-staging:
     needs:
       - deploy-to-staging
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     steps:
       - with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-staging
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-staging
           flag-name: default.score
           flag-config: |
             enabled: true
@@ -481,7 +481,7 @@ jobs:
             **Environment:** Staging  
             **Update Success:** ${{ steps.config-update.outputs.success }}
   run-launch-rehearsal:
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     needs:
       - enable-snkrs-flags-staging
     outputs:
@@ -528,30 +528,30 @@ jobs:
   sn-change-approval:
     needs:
       - prod-ready-approval
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/sn-approval.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/sn-approval.yaml
     secrets: inherit
     vars: inherit
   deploy-to-prod:
     needs:
       - sn-change-approval
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-prod
+      environment: lsa26-hackers-prod
     secrets: inherit
     vars: inherit
   progressive-snkrs-rollout:
     needs:
       - deploy-to-prod
-    environment: sd-hackers-prod
+    environment: lsa26-hackers-prod
     outputs:
       rollout-status: ${{ steps.rollout.outputs.status }}
     steps:
       - with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-prod
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-prod
           flag-name: default.score
           flag-config: |
             enabled: true
@@ -570,8 +570,8 @@ jobs:
       - with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-prod
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-prod
           flag-name: default.score
           flag-config: |
             enabled: true
@@ -606,7 +606,7 @@ jobs:
         uses: cloudbees-io/publish-evidence-item@v1
         name: Publish progressive rollout evidence
   launch-health-check:
-    environment: sd-hackers-prod
+    environment: lsa26-hackers-prod
     needs:
       - progressive-snkrs-rollout
     outputs:
