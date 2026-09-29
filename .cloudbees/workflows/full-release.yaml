@@ -88,17 +88,17 @@ jobs:
         name: Checkout Hackers Web
         id: checkout-hackers-web
         with:
-          repository: cb-golden-demo-org/sd-hackers-web
+          repository: cb-golden-demo-org/lsa26-hackers-web
       - uses: https://github.com/cloudbees-io/checkout@v1
         name: Checkout Hackers Auth
         id: checkout-hackers-auth
         with:
-          repository: cb-golden-demo-org/sd-hackers-auth
+          repository: cb-golden-demo-org/lsa26-hackers-auth
       - uses: https://github.com/cloudbees-io/checkout@v1
         name: Checkout Hackers API
         id: checkout-hackers-api
         with:
-          repository: cb-golden-demo-org/sd-hackers-api
+          repository: cb-golden-demo-org/lsa26-hackers-api
       - name: Format issues as table
         uses: docker://alpine:3.19
         id: format-issues
@@ -284,11 +284,11 @@ jobs:
     uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-qa
+      environment: lsa26-hackers-qa
     secrets: inherit
     vars: inherit
   enable-feature-flags-qa:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs: deploy-to-qa
     steps:
       - name: Update flag configuration
@@ -298,7 +298,7 @@ jobs:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
           application-name: lsa26-hackers-app
-          environment-name: sd-hackers-qa
+          environment-name: lsa26-hackers-qa
           flag-name: default.score
           use-org-as-app: false
           flag-config: |
@@ -321,7 +321,7 @@ jobs:
             ✅ Flag configuration update successful
           format: MARKDOWN
   run-tests-qa:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs: enable-feature-flags-qa
     outputs:
       test-results: ${{ steps.test-execution.outputs.results }}
@@ -438,7 +438,7 @@ jobs:
             **QA Test Gate**: PASSED - Ready for staging
           format: MARKDOWN
   exit-criteria-qa:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs: run-tests-qa
     outputs:
       gate-status: ${{ steps.evaluate-criteria.outputs.status }}
@@ -554,11 +554,11 @@ jobs:
     uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-staging
+      environment: lsa26-hackers-staging
     secrets: inherit
     vars: inherit
   enable-feature-flags-staging:
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     needs: deploy-to-staging
     steps:
       - name: Update flag configuration
@@ -568,7 +568,7 @@ jobs:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
           application-name: lsa26-hackers-app
-          environment-name: sd-hackers-staging
+          environment-name: lsa26-hackers-staging
           flag-name: default.score
           use-org-as-app: false
           flag-config: |
@@ -591,7 +591,7 @@ jobs:
             ✅ Flag configuration update successful
           format: MARKDOWN
   run-tests-staging:
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     needs: enable-feature-flags-staging
     outputs:
       test-results: ${{ steps.staging-tests.outputs.results }}
@@ -709,7 +709,7 @@ jobs:
             **Staging Gate**: PASSED - Ready for production consideration
           format: MARKDOWN
   exit-criteria-staging:
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     needs: run-tests-staging
     outputs:
       production-readiness: ${{ steps.readiness-check.outputs.status }}
@@ -843,11 +843,11 @@ jobs:
     uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-prod
+      environment: lsa26-hackers-prod
     secrets: inherit
     vars: inherit
   run-smoke-tests:
-    environment: sd-hackers-prod
+    environment: lsa26-hackers-prod
     needs: deploy-to-prod
     outputs:
       health-status: ${{ steps.health-check.outputs.status }}
@@ -1006,20 +1006,20 @@ jobs:
             **Production Smoke Tests**: PASSED - System ready for traffic
           format: MARKDOWN
   deploy-to-dev:
-    environment: sd-hackers-dev
+    environment: lsa26-hackers-dev
     steps:
       - name: hackers-api
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
-          artifact-id: ${{ fromJSON(inputs.manifest)['sd-hackers-api']['hackers-api'].id }}
+          artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].id }}
         kind: deploy
       - name: hackers-auth
         uses: cloudbees-io/register-deployed-artifact@v2
         kind: deploy
         with:
-          artifact-id: ${{ fromJSON(inputs.manifest)['sd-hackers-auth']['hackers-auth'].id }}
+          artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].id }}
       - name: hackers-web
         uses: cloudbees-io/register-deployed-artifact@v2
         kind: deploy
         with:
-          artifact-id: ${{ fromJSON(inputs.manifest)['sd-hackers-web']['hackers-web'].id }}
+          artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].id }}
