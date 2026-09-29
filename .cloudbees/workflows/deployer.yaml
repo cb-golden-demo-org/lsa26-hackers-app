@@ -14,28 +14,25 @@ on:
 jobs:
   hackers-api:
     if: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].deploy }}
-    uses: cb-golden-demo-org/lsa26-hackers-api/.github/workflows/deploy-api.yml
+    uses: cb-golden-demo-org/lsa26-hackers-api/.cloudbees/workflows/deploy-api.yaml
     with:
       artifact-url: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].url }}
       artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-api']['hackers-api'].id }}
       environment: ${{ inputs.environment }}
     secrets: inherit
-    vars: inherit
   hackers-auth:
     if: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].deploy }}
-    uses: cb-golden-demo-org/lsa26-hackers-auth/.github/workflows/deploy-auth.yml
+    uses: cb-golden-demo-org/lsa26-hackers-auth/.cloudbees/workflows/deploy-auth.yaml
     with:
       artifact-url: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].url }}
       artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-auth']['hackers-auth'].id }}
       environment: ${{ inputs.environment }}
     secrets: inherit
-    vars: inherit
   hackers-web:
     if: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].deploy }}
-    uses: cb-golden-demo-org/lsa26-hackers-web/.github/workflows/deploy-web.yml
+    uses: cb-golden-demo-org/lsa26-hackers-web/.cloudbees/workflows/deploy-web.yaml
     with:
       artifact-url: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].url }}
       artifact-id: ${{ fromJSON(inputs.manifest)['lsa26-hackers-web']['hackers-web'].id }}
       environment: ${{ inputs.environment }}
     secrets: inherit
-    vars: inherit
