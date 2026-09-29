@@ -129,15 +129,15 @@ jobs:
             ${{ steps.checkout-hackers-auth.outputs.commit-url}}
             ${{ steps.checkout-hackers-api.outputs.commit-url}}
           format: MARKDOWN
-  quality-checks:
-    needs:
-      - gather-evidence
-        outputs:
-          security-scan-results: ${{ steps.security-scan.outputs.results }}
-          code-quality-score: ${{ steps.code-analysis.outputs.quality-score }}
-          dependency-vulnerabilities: ${{ steps.dependency-check.outputs.vulnerabilities }}
-    steps:
-      - name: Security Vulnerability Scan
+quality-checks:
+      needs:
+        - gather-evidence
+      outputs:
+        security-scan-results: ${{ steps.security-scan.outputs.results }}
+        code-quality-score: ${{ steps.code-analysis.outputs.quality-score }}
+        dependency-vulnerabilities: ${{ steps.dependency-check.outputs.vulnerabilities }}
+      steps:
+        - name: Security Vulnerability Scan
           id: security-scan
           uses: docker://alpine:3.19
           run: |
