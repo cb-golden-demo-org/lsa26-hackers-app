@@ -115,12 +115,12 @@ jobs:
         uses: https://github.com/cloudbees-io/checkout@v1
         id: checkout-snkrs-web
         with:
-          repository: cb-golden-demo-org/sd-hackers-web
+          repository: cb-golden-demo-org/lsa26-hackers-web
       - name: Checkout API components
         uses: https://github.com/cloudbees-io/checkout@v1
         id: checkout-inventory-api
         with:
-          repository: cb-golden-demo-org/sd-hackers-api
+          repository: cb-golden-demo-org/lsa26-hackers-api
       - name: Format release plan
         id: format-release-plan
         uses: docker://alpine:3.20
@@ -360,14 +360,14 @@ jobs:
   deploy-snkrs-to-qa:
     needs:
       - confirm-sap-inventory-unlock
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-qa
+      environment: lsa26-hackers-qa
     secrets: inherit
     vars: inherit
   enable-snkrs-flags-qa:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs:
       - deploy-snkrs-to-qa
     steps:
@@ -377,8 +377,8 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-qa
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-qa
           flag-name: snkrs.limited.drop
           use-org-as-app: false
           flag-config: |
@@ -395,7 +395,7 @@ jobs:
             **Environment:** QA  
             **Update Success:** ${{ steps.config-update.outputs.success }}
   validate-consumer-journey-qa:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs:
       - enable-snkrs-flags-qa
     outputs:
@@ -425,7 +425,7 @@ jobs:
             - Checkout
             - Confirmation
   qa-exit-criteria:
-    environment: sd-hackers-qa
+    environment: lsa26-hackers-qa
     needs:
       - validate-consumer-journey-qa
     outputs:
@@ -450,14 +450,14 @@ jobs:
   deploy-to-staging:
     needs:
       - qa-exit-criteria
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-staging
+      environment: lsa26-hackers-staging
     secrets: inherit
     vars: inherit
   enable-snkrs-flags-staging:
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     needs:
       - deploy-to-staging
     steps:
@@ -467,8 +467,8 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-staging
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-staging
           flag-name: snkrs.limited.drop
           use-org-as-app: false
           flag-config: |
@@ -485,7 +485,7 @@ jobs:
             **Environment:** Staging  
             **Update Success:** ${{ steps.config-update.outputs.success }}
   run-launch-rehearsal:
-    environment: sd-hackers-staging
+    environment: lsa26-hackers-staging
     needs:
       - enable-snkrs-flags-staging
     outputs:
@@ -532,20 +532,20 @@ jobs:
   wait-for-enterprise-change-approval:
     needs:
       - production-readiness-review
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/sn-approval.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/sn-approval.yaml
     secrets: inherit
     vars: inherit
   deploy-to-prod:
     needs:
       - wait-for-enterprise-change-approval
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
-      environment: sd-hackers-prod
+      environment: lsa26-hackers-prod
     secrets: inherit
     vars: inherit
   progressive-snkrs-rollout:
-    environment: sd-hackers-prod
+    environment: lsa26-hackers-prod
     needs:
       - deploy-to-prod
     outputs:
@@ -557,8 +557,8 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-prod
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-prod
           flag-name: snkrs.limited.drop
           use-org-as-app: false
           flag-config: |
@@ -578,8 +578,8 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
-          environment-name: sd-hackers-prod
+          application-name: lsa26-hackers-app
+          environment-name: lsa26-hackers-prod
           flag-name: snkrs.limited.drop
           use-org-as-app: false
           flag-config: |
@@ -612,7 +612,7 @@ jobs:
 
             This demonstrates how Nike can replace manual launch scripts and reduce LaunchDarkly dependency with CloudBees Feature Management.
   validate-launch-critical-path:
-    environment: sd-hackers-prod
+    environment: lsa26-hackers-prod
     needs:
       - progressive-snkrs-rollout
     outputs:
