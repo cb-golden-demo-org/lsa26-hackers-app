@@ -132,128 +132,89 @@ jobs:
             ${{ steps.checkout-lsa26-hackers-auth.outputs.commit-url}}
             ${{ steps.checkout-lsa26-hackers-api.outputs.commit-url}}
           format: MARKDOWN
-  quality-checks:
-    needs:
-      - gather-evidence
-    outputs:
-      security-scan-results: ${{ steps.security-scan.outputs.results }}
-      code-quality-score: ${{ steps.code-analysis.outputs.quality-score }}
-      dependency-vulnerabilities: ${{ steps.dependency-check.outputs.vulnerabilities }}
-    steps:
-      - name: Security Vulnerability Scan
-        id: security-scan
-        uses: docker://alpine:3.19
-        run: |
-          apk add --no-cache curl jq
+quality-checks:
+  needs:
+    - gather-evidence
+  steps:
+    - name: Security Vulnerability Scan
+      id: security-scan
+      uses: docker://alpine:3.19
+      run: |
+        apk add --no-cache curl jq
 
-          # Simulate security scan results
-          cat > scan_results.json << 'EOF'
-          {
-            "scan_id": "sec-scan-$(date +%s)",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)",
-            "critical": 0,
-            "high": 2,
-            "medium": 7,
-            "low": 23,
-            "info": 45,
-            "total": 77,
-            "findings": [
-              {
-                "severity": "HIGH",
-                "title": "Outdated SSL/TLS Configuration",
-                "description": "TLS 1.1 still enabled, should enforce TLS 1.2+",
-                "file": "nginx.conf",
-                "remediation": "Update SSL configuration to disable TLS 1.1"
-              },
-              {
-                "severity": "HIGH",
-                "title": "Missing Security Headers",
-                "description": "X-Frame-Options header not configured",
-                "file": "server configuration",
-                "remediation": "Add X-Frame-Options: DENY header"
-              }
-            ]
-          }
-          EOF
+        cat > scan_results.json << 'EOF'
+        {
+          "critical": 0,
+          "high": 2,
+          "medium": 7,
+          "low": 23,
+          "info": 45,
+          "total": 77
+        }
+        EOF
 
-          cat scan_results.json > $CLOUDBEES_OUTPUTS/results
-      - name: Code Quality Analysis
-        id: code-analysis
-        uses: docker://node:22-alpine
-        run: |
-          # Simulate code quality metrics
-          QUALITY_SCORE=88
-          echo "$QUALITY_SCORE" > $CLOUDBEES_OUTPUTS/quality-score
+        jq -c . scan_results.json > "$CLOUDBEES_OUTPUTS/results"
 
-          echo "Running ESLint analysis..."
-          sleep 2
-          echo "✓ Code style compliance: 94%"
-          echo "✓ Complexity score: $QUALITY_SCORE/100"
-          echo "✓ Test coverage: 87.3%"
-          echo "✓ Maintainability index: A"
-      - name: Dependency Vulnerability Check
-        id: dependency-check
-        uses: docker://node:22-alpine
-        run: |
-          # Simulate dependency scan
-          echo "Scanning npm dependencies..."
-          sleep 3
+    - name: Code Quality Analysis
+      id: code-analysis
+      uses: docker://node:22-alpine
+      run: |
+        QUALITY_SCORE=88
+        echo "$QUALITY_SCORE" > "$CLOUDBEES_OUTPUTS/quality-score"
 
-          cat > vulnerabilities.json << 'EOF'
-          {
-            "audit_summary": {
-              "vulnerabilities": {
-                "info": 0,
-                "low": 3,
-                "moderate": 1,
-                "high": 0,
-                "critical": 0,
-                "total": 4
-              }
-            },
-            "advisories": [
-              {
-                "severity": "moderate",
-                "title": "Regular Expression Denial of Service",
-                "module_name": "semver",
-                "vulnerable_versions": "<7.5.2",
-                "patched_versions": ">=7.5.2"
-              }
-            ]
-          }
-          EOF
+        echo "Running ESLint analysis..."
+        sleep 2
+        echo "Code style compliance: 94%"
+        echo "Complexity score: $QUALITY_SCORE/100"
+        echo "Test coverage: 87.3%"
+        echo "Maintainability index: A"
 
-          cat vulnerabilities.json > $CLOUDBEES_OUTPUTS/vulnerabilities
+    - name: Dependency Vulnerability Check
+      id: dependency-check
+      uses: docker://node:22-alpine
+      run: |
+        echo "Scanning npm dependencies..."
+        sleep 3
 
-          echo "✓ 0 critical vulnerabilities found"
-          echo "✓ 1 moderate vulnerability found (non-blocking)"
-      - name: Publish Quality Gate Evidence
-        uses: cloudbees-io/publish-evidence-item@v1
-        with:
-          content: |
-            # Quality Gate Results
+        cat > vulnerabilities.json << 'EOF'
+        {
+          "critical": 0,
+          "high": 0,
+          "moderate": 1,
+          "low": 3,
+          "total": 4
+        }
+        EOF
 
-            ## Security Scan
-            - **Critical**: 0
-            - **High**: 2
-            - **Medium**: 7
-            - **Low**: 23
-            - **Total Issues**: 77
+        jq -c . vulnerabilities.json > "$CLOUDBEES_OUTPUTS/vulnerabilities"
 
-            ## Code Quality
-            - **Quality Score**: ${{ steps.code-analysis.outputs.quality-score }}/100
-            - **Test Coverage**: 87.3%
-            - **Code Style Compliance**: 94%
-            - **Maintainability**: Grade A
+    - name: Publish Quality Gate Evidence
+      uses: cloudbees-io/publish-evidence-item@v1
+      with:
+        content: |
+          # Quality Gate Results
 
-            ## Dependency Security
-            - **Critical Vulnerabilities**: 0
-            - **High Vulnerabilities**: 0
-            - **Moderate Vulnerabilities**: 1
-            - **Low Vulnerabilities**: 3
+          ## Security Scan
+          - **Critical**: 0
+          - **High**: 2
+          - **Medium**: 7
+          - **Low**: 23
+          - **Total Issues**: 77
 
-            **Quality Gate**: PASSED - No blocking issues found
-          format: MARKDOWN
+          ## Code Quality
+          - **Quality Score**: ${{ steps.code-analysis.outputs.quality-score }}/100
+          - **Test Coverage**: 87.3%
+          - **Code Style Compliance**: 94%
+          - **Maintainability**: Grade A
+
+          ## Dependency Security
+          - **Critical Vulnerabilities**: 0
+          - **High Vulnerabilities**: 0
+          - **Moderate Vulnerabilities**: 1
+          - **Low Vulnerabilities**: 3
+
+          **Quality Gate**: PASSED - No blocking issues found
+        format: MARKDOWN
   update-jira-tickets:
     needs:
       - quality-checks
