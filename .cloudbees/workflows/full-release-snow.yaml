@@ -246,7 +246,7 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: ${{ vars.ORG_ID }}
-          application-name: lsa26-hackers-app
+          application-name: Hackers-app
           environment-name: lsa26-hackers-qa
           flag-name: default.score
           use-org-as-app: true
@@ -521,7 +521,7 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: ${{ vars.ORG_ID }}
-          application-name: lsa26-hackers-app
+          application-name: Hackers-app
           environment-name: lsa26-hackers-staging
           flag-name: default.score
           use-org-as-app: true
@@ -976,7 +976,7 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: ${{ vars.ORG_ID }}
-          application-name: lsa26-hackers-app
+          application-name: Hackers-app
           environment-name: lsa26-hackers-prod
           flag-name: default.score
           use-org-as-app: true
