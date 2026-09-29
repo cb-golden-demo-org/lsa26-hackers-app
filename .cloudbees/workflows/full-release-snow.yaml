@@ -280,7 +280,7 @@ jobs:
   deploy-to-qa:
     needs:
       - approval
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
       environment: sd-hackers-qa
@@ -297,7 +297,7 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
+          application-name: lsa26-hackers-app
           environment-name: sd-hackers-qa
           flag-name: default.score
           use-org-as-app: false
@@ -555,7 +555,7 @@ jobs:
   deploy-to-staging:
     needs:
       - release-manager-approval
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
       environment: sd-hackers-staging
@@ -572,7 +572,7 @@ jobs:
         with:
           token: ${{ secrets.UNIFY_TOKEN }}
           org-id: e8854086-415f-4497-a717-522d5a8af4f8
-          application-name: sd-hackers-app
+          application-name: lsa26-hackers-app
           environment-name: sd-hackers-staging
           flag-name: default.score
           use-org-as-app: false
@@ -837,13 +837,13 @@ jobs:
           format: MARKDOWN
   wait-for-snow-change-request:
     needs: exit-criteria-staging
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/sn-approval.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/sn-approval.yaml
     secrets: inherit
     vars: inherit
   deploy-to-prod:
     needs:
       - wait-for-snow-change-request
-    uses: cb-golden-demo-org/sd-hackers-app/.cloudbees/workflows/deployer.yaml
+    uses: cb-golden-demo-org/lsa26-hackers-app/.cloudbees/workflows/deployer.yaml
     with:
       manifest: ${{ inputs.manifest }}
       environment: sd-hackers-prod
